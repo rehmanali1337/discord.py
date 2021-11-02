@@ -374,17 +374,32 @@ class DiscordWebSocket:
         return future
 
     async def identify(self):
+        #### Added by Rehman Ali ####
+        browser = "Chrome"
+        browser_user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
+        browser_version = "95.0.4638.69"
+        client_build_number = 103255
+        os = "Linux"
+        release_channel = "stable"
+        system_locale = "en-US"
+        #### Added by Rehman Ali Ends here ####
         """Sends the IDENTIFY packet."""
         payload = {
             'op': self.IDENTIFY,
             'd': {
                 'token': self.token,
+                'capcabilities': 125,
                 'properties': {
-                    '$os': sys.platform,
-                    '$browser': 'discord.py',
-                    '$device': 'discord.py',
+                    '$os': os,
+                    '$browser': browser,
+                    '$device': '',
                     '$referrer': '',
-                    '$referring_domain': ''
+                    '$referring_domain': '',
+                    '$browser_user_agent': browser_user_agent,
+                    '$browser_version': browser_version,
+                    '$client_build_number': client_build_number,
+                    '$release_channel': release_channel,
+                    '$system_locale': system_locale,
                 },
                 'compress': True,
                 'large_threshold': 250,
