@@ -514,6 +514,7 @@ class DiscordWebSocket:
             return
 
         event = msg.get('t')
+        # print(msg)
 
         if event == 'READY':
             self._trace = trace = data.get('_trace', [])

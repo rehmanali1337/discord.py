@@ -56,6 +56,7 @@ from .appinfo import AppInfo
 
 log = logging.getLogger(__name__)
 
+
 def _cancel_tasks(loop):
     try:
         task_retriever = asyncio.Task.all_tasks
@@ -85,6 +86,7 @@ def _cancel_tasks(loop):
                 'task': task
             })
 
+
 def _cleanup_loop(loop):
     try:
         _cancel_tasks(loop)
@@ -93,6 +95,7 @@ def _cleanup_loop(loop):
     finally:
         log.info('Closing the event loop.')
         loop.close()
+
 
 class _ClientEventTask(asyncio.Task):
     def __init__(self, original_coro, event_name, coro, *, loop):
@@ -109,6 +112,7 @@ class _ClientEventTask(asyncio.Task):
         if self._exception is not None:
             info.append(('exception', repr(self._exception)))
         return '<ClientEventTask {}>'.format(' '.join('%s=%s' % t for t in info))
+
 
 class Client:
     r"""Represents a client connection that connects to Discord.
@@ -224,6 +228,7 @@ class Client:
     loop: :class:`asyncio.AbstractEventLoop`
         The event loop that the client uses for HTTP requests and websocket operations.
     """
+
     def __init__(self, *, loop=None, **options):
         self.ws = None
         self.loop = asyncio.get_event_loop() if loop is None else loop
@@ -235,7 +240,8 @@ class Client:
         proxy = options.pop('proxy', None)
         proxy_auth = options.pop('proxy_auth', None)
         unsync_clock = options.pop('assume_unsync_clock', True)
-        self.http = HTTPClient(connector, proxy=proxy, proxy_auth=proxy_auth, unsync_clock=unsync_clock, loop=self.loop)
+        self.http = HTTPClient(connector, proxy=proxy, proxy_auth=proxy_auth,
+                               unsync_clock=unsync_clock, loop=self.loop)
 
         self._handlers = {
             'ready': self._handle_ready
@@ -256,7 +262,27 @@ class Client:
             VoiceClient.warn_nacl = False
             log.warning("PyNaCl is not installed, voice will NOT be supported")
 
-    # internals
+    async def scrape_members(self, guild_id, channel_id):
+        payload = {
+            "op": 14,
+            "d": {
+                "guild_id": "874366551229353984",
+                "typing": True,
+                "activities": True,
+                "threads": True,
+                "channels": {
+                    "880031242966401055": [
+                        [
+                            0,
+                            99
+                        ]
+                    ]
+                }
+            }
+        }
+        await self.ws.send_as_json(payload)
+
+    # internals here
 
     def _get_websocket(self, guild_id=None, *, shard_id=None):
         return self.ws
@@ -516,7 +542,7 @@ class Client:
         """|coro|
 
         Logs out of Discord and closes all connections.
-        
+
         .. deprecated:: 1.7
 
         .. note::
@@ -567,7 +593,8 @@ class Client:
             except ReconnectWebSocket as e:
                 log.info('Got a request to %s the websocket.', e.op)
                 self.dispatch('disconnect')
-                ws_params.update(sequence=self.ws.sequence, resume=e.resume, session=self.ws.session_id)
+                ws_params.update(sequence=self.ws.sequence,
+                                 resume=e.resume, session=self.ws.session_id)
                 continue
             except (OSError,
                     HTTPException,
@@ -589,7 +616,8 @@ class Client:
 
                 # If we get connection reset by peer then try to RESUME
                 if isinstance(exc, OSError) and exc.errno in (54, 10054):
-                    ws_params.update(sequence=self.ws.sequence, initial=False, resume=True, session=self.ws.session_id)
+                    ws_params.update(
+                        sequence=self.ws.sequence, initial=False, resume=True, session=self.ws.session_id)
                     continue
 
                 # We should only get this when an unhandled close code happens,
@@ -609,7 +637,8 @@ class Client:
                 # Always try to RESUME the connection
                 # If the connection is not RESUME-able then the gateway will invalidate the session.
                 # This is apparently what the official Discord client does.
-                ws_params.update(sequence=self.ws.sequence, resume=True, session=self.ws.session_id)
+                ws_params.update(sequence=self.ws.sequence,
+                                 resume=True, session=self.ws.session_id)
 
     async def close(self):
         """|coro|
@@ -660,7 +689,8 @@ class Client:
         reconnect = kwargs.pop('reconnect', True)
 
         if kwargs:
-            raise TypeError("unexpected keyword argument(s) %s" % list(kwargs.keys()))
+            raise TypeError("unexpected keyword argument(s) %s" %
+                            list(kwargs.keys()))
 
         await self.login(*args, bot=bot)
         await self.connect(reconnect=reconnect)
@@ -760,7 +790,8 @@ class Client:
         if value is None or isinstance(value, AllowedMentions):
             self._connection.allowed_mentions = value
         else:
-            raise TypeError('allowed_mentions must be AllowedMentions not {0.__class__!r}'.format(value))
+            raise TypeError(
+                'allowed_mentions must be AllowedMentions not {0.__class__!r}'.format(value))
 
     @property
     def intents(self):
@@ -1421,7 +1452,8 @@ class Client:
             return state._get_guild(int(d['id']))
 
         since = data.get('premium_since')
-        mutual_guilds = list(filter(None, map(transform, data.get('mutual_guilds', []))))
+        mutual_guilds = list(
+            filter(None, map(transform, data.get('mutual_guilds', []))))
         user = data['user']
         return Profile(flags=user.get('flags', 0),
                        premium_since=utils.parse_time(since),
@@ -1460,7 +1492,8 @@ class Client:
 
         factory, ch_type = _channel_factory(data['type'])
         if factory is None:
-            raise InvalidData('Unknown channel type {type} for channel ID {id}.'.format_map(data))
+            raise InvalidData(
+                'Unknown channel type {type} for channel ID {id}.'.format_map(data))
 
         if ch_type in (ChannelType.group, ChannelType.private):
             channel = factory(me=self.user, data=data, state=self._connection)
