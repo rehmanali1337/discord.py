@@ -407,6 +407,24 @@ class DiscordWebSocket:
                 'v': 3
             }
         }
+        if self._connection.is_bot:
+            payload = {
+                'op': self.IDENTIFY,
+                'd': {
+                    'token': self.token,
+                    'properties': {
+                        '$os': sys.platform,
+                        '$browser': 'discord.py',
+                        '$device': 'discord.py',
+                        '$referrer': '',
+                        '$referring_domain': ''
+                    },
+                    'compress': True,
+                    'large_threshold': 250,
+                    'guild_subscriptions': self._connection.guild_subscriptions,
+                    'v': 3
+                }
+            }
 
         if not self._connection.is_bot:
             payload['d']['synced_guilds'] = []
@@ -520,7 +538,8 @@ class DiscordWebSocket:
             self._trace = trace = data.get('_trace', [])
             self.sequence = msg['s']
             self.session_id = data['session_id']
-            self.analytics_token = data["analytics_token"]
+            if not self._connection.is_bot:
+                self.analytics_token = data["analytics_token"]
             # pass back shard ID to ready handler
             data['__shard_id__'] = self.shard_id
             log.info('Shard ID %s has connected to Gateway: %s (Session ID: %s).',
